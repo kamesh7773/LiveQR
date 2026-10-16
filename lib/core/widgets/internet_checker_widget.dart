@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../services/internet_service.dart';
@@ -49,14 +48,14 @@ class InternetCheckerWidget extends HookConsumerWidget {
                   padding: padding,
                 )
               : (showOnlineRestored
-                  ? _StatusBanner(
-                      key: const ValueKey('online'),
-                      message: onlineMessage,
-                      color: AppColors.success,
-                      icon: Icons.wifi_rounded,
-                      padding: padding,
-                    )
-                  : const SizedBox.shrink(key: ValueKey('idle'))),
+                    ? _StatusBanner(
+                        key: const ValueKey('online'),
+                        message: onlineMessage,
+                        color: AppColors.success,
+                        icon: Icons.wifi_rounded,
+                        padding: padding,
+                      )
+                    : const SizedBox.shrink(key: ValueKey('idle'))),
         ),
         Expanded(child: child),
       ],
@@ -89,13 +88,13 @@ class _StatusBanner extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: Colors.white, size: 16.sp),
-              SizedBox(width: 8.w),
+              Icon(icon, color: Colors.white, size: 16),
+              SizedBox(width: 8),
               Text(
                 message,
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 12.sp,
+                  fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
               ),

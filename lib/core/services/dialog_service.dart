@@ -32,53 +32,49 @@ class DialogService extends _$DialogService {
     String message, {
     String title = 'Error',
     Duration duration = const Duration(seconds: 4),
-  }) =>
-      _showToast(
-        title: title,
-        message: message,
-        type: ToastificationType.error,
-        primaryColor: AppColors.error,
-        duration: duration,
-      );
+  }) => _showToast(
+    title: title,
+    message: message,
+    type: ToastificationType.error,
+    primaryColor: AppColors.error,
+    duration: duration,
+  );
 
   void showSuccess(
     String message, {
     String title = 'Success',
     Duration duration = const Duration(seconds: 4),
-  }) =>
-      _showToast(
-        title: title,
-        message: message,
-        type: ToastificationType.success,
-        primaryColor: AppColors.success,
-        duration: duration,
-      );
+  }) => _showToast(
+    title: title,
+    message: message,
+    type: ToastificationType.success,
+    primaryColor: AppColors.success,
+    duration: duration,
+  );
 
   void showWarning(
     String message, {
     String title = 'Warning',
     Duration duration = const Duration(seconds: 4),
-  }) =>
-      _showToast(
-        title: title,
-        message: message,
-        type: ToastificationType.warning,
-        primaryColor: AppColors.warning,
-        duration: duration,
-      );
+  }) => _showToast(
+    title: title,
+    message: message,
+    type: ToastificationType.warning,
+    primaryColor: AppColors.warning,
+    duration: duration,
+  );
 
   void showInfo(
     String message, {
     String title = 'Info',
     Duration duration = const Duration(seconds: 4),
-  }) =>
-      _showToast(
-        title: title,
-        message: message,
-        type: ToastificationType.info,
-        primaryColor: AppColors.info,
-        duration: duration,
-      );
+  }) => _showToast(
+    title: title,
+    message: message,
+    type: ToastificationType.info,
+    primaryColor: AppColors.info,
+    duration: duration,
+  );
 
   void _showToast({
     required String title,

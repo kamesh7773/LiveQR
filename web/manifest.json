@@ -1,11 +1,11 @@
 {
-    "name": "base_flutter_application",
-    "short_name": "base_flutter_application",
+    "name": "Live QR",
+    "short_name": "Live QR",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#F7F7FC",
+    "theme_color": "#2563EB",
+    "description": "Create a business page and QR code in minutes.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

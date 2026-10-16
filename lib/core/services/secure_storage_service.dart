@@ -8,7 +8,7 @@ part 'secure_storage_service.g.dart';
 /// be injected like any other dependency:
 ///
 /// ```dart
-/// final token = await ref.read(secureStorageServiceProvider.notifier).getToken();
+/// final value = await ref.read(secureStorageServiceProvider.notifier).read('key');
 /// ```
 @Riverpod(keepAlive: true)
 class SecureStorageService extends _$SecureStorageService {
@@ -18,35 +18,10 @@ class SecureStorageService extends _$SecureStorageService {
   );
 
   // Keys
-  static const String _tokenKey = 'auth_token';
-  static const String _refreshTokenKey = 'refresh_token';
   static const String _firstLaunchKey = 'first_launch';
-  static const String _userIdKey = 'user_id';
 
   @override
   void build() {}
-
-  // Auth tokens
-  Future<void> saveToken(String token) =>
-      _storage.write(key: _tokenKey, value: token);
-
-  Future<String?> getToken() => _storage.read(key: _tokenKey);
-
-  Future<void> saveRefreshToken(String token) =>
-      _storage.write(key: _refreshTokenKey, value: token);
-
-  Future<String?> getRefreshToken() => _storage.read(key: _refreshTokenKey);
-
-  Future<void> deleteTokens() async {
-    await _storage.delete(key: _tokenKey);
-    await _storage.delete(key: _refreshTokenKey);
-  }
-
-  // User ID
-  Future<void> saveUserId(String id) =>
-      _storage.write(key: _userIdKey, value: id);
-
-  Future<String?> getUserId() => _storage.read(key: _userIdKey);
 
   // First-launch flag
   Future<bool> isFirstLaunch() async {

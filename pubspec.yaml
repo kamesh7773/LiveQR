@@ -21,13 +21,8 @@ dependencies:
   # UI Components and Responsive Design
   cupertino_icons: ^1.0.8
   flutter_svg: ^2.0.10+1
-  flutter_screenutil: ^5.9.3
   loading_animation_widget: ^1.3.0
   toastification: ^3.2.0
-
-  # Networking and API
-  dio: ^5.7.0
-  pretty_dio_logger: ^1.4.0
 
   # Storage and Database
   flutter_secure_storage: ^10.2.0
@@ -41,6 +36,20 @@ dependencies:
   
   # Notifications
   awesome_notifications: ^0.11.0
+
+  # Firebase
+  # Held at 4.x/6.x: firebase_core 5 (iOS SDK 13) conflicts with google_sign_in_ios 6.3.x
+  # (GoogleSignIn 9) over gtm-session-fetcher. Upgrade both once google_sign_in_ios moves to GoogleSignIn 10.
+  firebase_core: ^4.15.0
+  firebase_auth: ^6.0.0
+  google_sign_in: ^7.2.0
+
+  # Networking and API
+  dio: ^5.11.1
+  pretty_dio_logger: ^1.4.0
+
+  # QR code generation
+  qr: ^4.0.0
 
 dev_dependencies:
   flutter_test:
@@ -78,12 +87,32 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    - assets/images/optimized/
     - assets/svg/
     - assets/icons/
-    - assets/fonts/
     - .env.development
     - .env.staging
     - .env.production
+
+  # Static instances from Google Fonts (OFL licences beside the files).
+  fonts:
+    - family: PlusJakartaSans
+      fonts:
+        - asset: assets/fonts/PlusJakartaSans-400.ttf
+        - asset: assets/fonts/PlusJakartaSans-500.ttf
+          weight: 500
+        - asset: assets/fonts/PlusJakartaSans-600.ttf
+          weight: 600
+        - asset: assets/fonts/PlusJakartaSans-700.ttf
+          weight: 700
+        - asset: assets/fonts/PlusJakartaSans-800.ttf
+          weight: 800
+    - family: BricolageGrotesque
+      fonts:
+        - asset: assets/fonts/BricolageGrotesque-600.ttf
+          weight: 600
+        - asset: assets/fonts/BricolageGrotesque-700.ttf
+          weight: 700
 
 # App launcher icon (Android + iOS)
 # Drop a 1024x1024 PNG at assets/icons/app_logo.png, then run:

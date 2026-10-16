@@ -1,11 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-enum Environment {
-  development,
-  staging,
-  production,
-}
+enum Environment { development, staging, production }
 
 class Env {
   static late Environment _environment;
@@ -37,13 +33,13 @@ class Env {
     if (kReleaseMode && !enableLogs) return;
 
     final flavor = _environment.name.toUpperCase();
-    final banner = '''
+    final banner =
+        '''
 ╔══════════════════════════════════════════════════════════╗
 ║  🚀 App launched — flavor: $flavor
 ╠══════════════════════════════════════════════════════════╣
 ║  env file        : $fileName
 ║  API_BASE_URL    : $apiBaseUrl
-║  API_VERSION     : $apiVersion
 ║  ENABLE_LOGS     : $enableLogs
 ║  ENABLE_ANALYTICS: $enableAnalytics
 ║  ENABLE_CRASH    : $enableCrashReporting
@@ -53,8 +49,6 @@ class Env {
   }
 
   static String get apiBaseUrl => dotenv.env['API_BASE_URL'] ?? '';
-  static String get apiVersion => dotenv.env['API_VERSION'] ?? 'v1';
-  static String? get apiToken => dotenv.env['API_TOKEN'];
   static bool get enableLogs => dotenv.env['ENABLE_LOGS'] == 'true';
   static bool get enableAnalytics => dotenv.env['ENABLE_ANALYTICS'] == 'true';
   static bool get enableCrashReporting =>

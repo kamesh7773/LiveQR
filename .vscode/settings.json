@@ -1,5 +1,9 @@
 {
     "yaml.schemas": {
         "https://www.schemastore.org/pubspec.json": "file:///Users/maxaix/Developer/flutter%20projects/Maxaix/base_flutter_application/pubspec.yaml"
-    }
+    },
+    // Overrides the user-level --web-port=5000: on macOS, 5000 is taken by AirPlay Receiver.
+    "dart.flutterRunAdditionalArgs": [
+        "--web-port=8080"
+    ]
 }

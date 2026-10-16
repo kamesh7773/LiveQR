@@ -8,11 +8,11 @@ import 'api_client.dart';
 ///
 /// ```dart
 /// @riverpod
-/// AuthRepository authRepository(Ref ref) => AuthRepository(ref);
+/// PagesRepository pagesRepository(Ref ref) => PagesRepository(ref);
 ///
-/// class AuthRepository extends BaseApiService {
-///   AuthRepository(Ref ref) : super(ref);
-///   Future<Response> login(...) => post('/auth/login', data: ...);
+/// class PagesRepository extends BaseApiService {
+///   PagesRepository(super.ref);
+///   Future<Response> fetchPages() => get('/pages');
 /// }
 /// ```
 abstract class BaseApiService {
@@ -29,13 +29,12 @@ abstract class BaseApiService {
     Map<String, dynamic>? queryParameters,
     Options? options,
     CancelToken? cancelToken,
-  }) =>
-      _dio.get(
-        path,
-        queryParameters: queryParameters,
-        options: options,
-        cancelToken: cancelToken,
-      );
+  }) => _dio.get(
+    path,
+    queryParameters: queryParameters,
+    options: options,
+    cancelToken: cancelToken,
+  );
 
   Future<Response> post(
     String path, {
@@ -43,14 +42,13 @@ abstract class BaseApiService {
     Map<String, dynamic>? queryParameters,
     Options? options,
     CancelToken? cancelToken,
-  }) =>
-      _dio.post(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-        cancelToken: cancelToken,
-      );
+  }) => _dio.post(
+    path,
+    data: data,
+    queryParameters: queryParameters,
+    options: options,
+    cancelToken: cancelToken,
+  );
 
   Future<Response> put(
     String path, {
@@ -58,14 +56,13 @@ abstract class BaseApiService {
     Map<String, dynamic>? queryParameters,
     Options? options,
     CancelToken? cancelToken,
-  }) =>
-      _dio.put(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-        cancelToken: cancelToken,
-      );
+  }) => _dio.put(
+    path,
+    data: data,
+    queryParameters: queryParameters,
+    options: options,
+    cancelToken: cancelToken,
+  );
 
   Future<Response> patch(
     String path, {
@@ -73,14 +70,13 @@ abstract class BaseApiService {
     Map<String, dynamic>? queryParameters,
     Options? options,
     CancelToken? cancelToken,
-  }) =>
-      _dio.patch(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-        cancelToken: cancelToken,
-      );
+  }) => _dio.patch(
+    path,
+    data: data,
+    queryParameters: queryParameters,
+    options: options,
+    cancelToken: cancelToken,
+  );
 
   Future<Response> delete(
     String path, {
@@ -88,12 +84,11 @@ abstract class BaseApiService {
     Map<String, dynamic>? queryParameters,
     Options? options,
     CancelToken? cancelToken,
-  }) =>
-      _dio.delete(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-        cancelToken: cancelToken,
-      );
+  }) => _dio.delete(
+    path,
+    data: data,
+    queryParameters: queryParameters,
+    options: options,
+    cancelToken: cancelToken,
+  );
 }

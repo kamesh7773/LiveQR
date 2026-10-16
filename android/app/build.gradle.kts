@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.baseapp"
+    namespace = "com.maxaix.liveqr"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -20,7 +20,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.baseapp"
+        applicationId = "com.maxaix.liveqr"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

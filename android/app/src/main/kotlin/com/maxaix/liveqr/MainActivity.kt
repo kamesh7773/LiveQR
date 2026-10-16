@@ -1,4 +1,4 @@
-package com.example.baseapp
+package com.maxaix.liveqr
 
 import io.flutter.embedding.android.FlutterActivity
 

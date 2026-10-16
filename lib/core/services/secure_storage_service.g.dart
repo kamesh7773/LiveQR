@@ -13,7 +13,7 @@ part of 'secure_storage_service.dart';
 /// be injected like any other dependency:
 ///
 /// ```dart
-/// final token = await ref.read(secureStorageServiceProvider.notifier).getToken();
+/// final value = await ref.read(secureStorageServiceProvider.notifier).read('key');
 /// ```
 
 @ProviderFor(SecureStorageService)
@@ -24,7 +24,7 @@ final secureStorageServiceProvider = SecureStorageServiceProvider._();
 /// be injected like any other dependency:
 ///
 /// ```dart
-/// final token = await ref.read(secureStorageServiceProvider.notifier).getToken();
+/// final value = await ref.read(secureStorageServiceProvider.notifier).read('key');
 /// ```
 final class SecureStorageServiceProvider
     extends $NotifierProvider<SecureStorageService, void> {
@@ -33,7 +33,7 @@ final class SecureStorageServiceProvider
   /// be injected like any other dependency:
   ///
   /// ```dart
-  /// final token = await ref.read(secureStorageServiceProvider.notifier).getToken();
+  /// final value = await ref.read(secureStorageServiceProvider.notifier).read('key');
   /// ```
   SecureStorageServiceProvider._()
     : super(
@@ -63,14 +63,14 @@ final class SecureStorageServiceProvider
 }
 
 String _$secureStorageServiceHash() =>
-    r'0f929272bdd048b85075e37e0f9c85b3d9177e82';
+    r'93bce159b0a6d6289ebfb0dbda432459f64ef4e5';
 
 /// Secure key-value storage backed by Keychain (iOS) / EncryptedSharedPrefs
 /// migration target (Android v10+). Exposed as a Riverpod service so it can
 /// be injected like any other dependency:
 ///
 /// ```dart
-/// final token = await ref.read(secureStorageServiceProvider.notifier).getToken();
+/// final value = await ref.read(secureStorageServiceProvider.notifier).read('key');
 /// ```
 
 abstract class _$SecureStorageService extends $Notifier<void> {

@@ -3,5 +3,7 @@
 FLUTTER_TARGET=lib/main_staging.dart
 ASSET_PREFIX=staging
 BUNDLE_SUFFIX=.staging
-PRODUCT_BUNDLE_IDENTIFIER=com.example.baseapp.staging
+PRODUCT_BUNDLE_IDENTIFIER=com.maxaix.liveqr.staging
 DISPLAY_NAME=Flutter Staging
+GOOGLE_REVERSED_CLIENT_ID=com.googleusercontent.apps.714496427127-15q8oagmnngq7mplr70rfvajej66jris
+CODE_SIGN_ENTITLEMENTS=Runner/Runner.entitlements

@@ -3,5 +3,7 @@
 FLUTTER_TARGET=lib/main_development.dart
 ASSET_PREFIX=development
 BUNDLE_SUFFIX=.dev
-PRODUCT_BUNDLE_IDENTIFIER=com.example.baseapp.dev
+PRODUCT_BUNDLE_IDENTIFIER=com.maxaix.liveqr.dev
 DISPLAY_NAME=Flutter Dev
+GOOGLE_REVERSED_CLIENT_ID=com.googleusercontent.apps.714496427127-us3ah9ibadvlba5ur6iq2o2dr8kgr3vp
+CODE_SIGN_ENTITLEMENTS=Runner/Runner.entitlements

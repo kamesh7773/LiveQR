@@ -2,5 +2,7 @@
 
 FLUTTER_TARGET=lib/main.dart
 ASSET_PREFIX=production
-PRODUCT_BUNDLE_IDENTIFIER=com.example.baseapp
+PRODUCT_BUNDLE_IDENTIFIER=com.maxaix.liveqr
 DISPLAY_NAME=Flutter
+GOOGLE_REVERSED_CLIENT_ID=com.googleusercontent.apps.714496427127-upnmh9eg0d5keunturlkpijaoe2lac22
+CODE_SIGN_ENTITLEMENTS=Runner/Runner.entitlements

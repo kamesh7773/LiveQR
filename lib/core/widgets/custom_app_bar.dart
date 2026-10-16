@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../theme/app_colors.dart';
 
@@ -35,9 +34,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   });
 
   @override
-  Size get preferredSize => Size.fromHeight(
-        kToolbarHeight + (bottom?.preferredSize.height ?? 0),
-      );
+  Size get preferredSize =>
+      Size.fromHeight(kToolbarHeight + (bottom?.preferredSize.height ?? 0));
 
   @override
   Widget build(BuildContext context) {
@@ -50,23 +48,25 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       centerTitle: centerTitle,
       systemOverlayStyle: systemOverlayStyle,
       automaticallyImplyLeading: false,
-      leading: leading ??
+      leading:
+          leading ??
           (showBackButton && canPop
               ? IconButton(
                   icon: Icon(
                     Icons.arrow_back_ios_new_rounded,
-                    size: 20.sp,
+                    size: 20,
                     color: foregroundColor,
                   ),
                   onPressed: onBackPressed ?? () => Navigator.maybePop(context),
                 )
               : null),
-      title: titleWidget ??
+      title:
+          titleWidget ??
           (title != null
               ? Text(
                   title!,
                   style: TextStyle(
-                    fontSize: 17.sp,
+                    fontSize: 17,
                     fontWeight: FontWeight.w600,
                     color: foregroundColor,
                   ),

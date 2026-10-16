@@ -1,18 +1,14 @@
 import '../config/env.dart';
 
+/// Routes of the LiveQR backend (liveqr-backend), relative to [baseUrl] (…/v1).
 class ApiEndpoints {
   ApiEndpoints._();
 
   static String get baseUrl => Env.apiBaseUrl;
 
-  // Auth (Platzi Fake Store API)
-  static const String login = '/auth/login';
-  static const String refreshToken = '/auth/refresh-token';
-  static const String profile = '/auth/profile';
-  static const String register = '/users';
+  // Account
+  static const String me = '/me';
 
-  // Products
-  static const String products = '/products';
-  static String productById(int id) => '/products/$id';
-  static const String categories = '/categories';
+  // Images (multipart field "file")
+  static const String uploads = '/uploads';
 }

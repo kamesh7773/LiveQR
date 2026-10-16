@@ -8,76 +8,97 @@ part of 'home_view_model.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// View model for the home (products) screen.
-///
-/// API outcomes are surfaced via [DialogService] (toasts) and
-/// [NotificationService] (system notifications). State holds only data
-/// and in-flight flags — messaging is side-effectful.
+/// GET /v1/me — the backend creates the user record on the first call.
 
-@ProviderFor(HomeViewModel)
-final homeViewModelProvider = HomeViewModelProvider._();
+@ProviderFor(backendProfile)
+final backendProfileProvider = BackendProfileProvider._();
 
-/// View model for the home (products) screen.
-///
-/// API outcomes are surfaced via [DialogService] (toasts) and
-/// [NotificationService] (system notifications). State holds only data
-/// and in-flight flags — messaging is side-effectful.
-final class HomeViewModelProvider
-    extends $NotifierProvider<HomeViewModel, HomeState> {
-  /// View model for the home (products) screen.
-  ///
-  /// API outcomes are surfaced via [DialogService] (toasts) and
-  /// [NotificationService] (system notifications). State holds only data
-  /// and in-flight flags — messaging is side-effectful.
-  HomeViewModelProvider._()
+/// GET /v1/me — the backend creates the user record on the first call.
+
+final class BackendProfileProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Map<String, dynamic>>,
+          Map<String, dynamic>,
+          FutureOr<Map<String, dynamic>>
+        >
+    with
+        $FutureModifier<Map<String, dynamic>>,
+        $FutureProvider<Map<String, dynamic>> {
+  /// GET /v1/me — the backend creates the user record on the first call.
+  BackendProfileProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'homeViewModelProvider',
+        name: r'backendProfileProvider',
         isAutoDispose: true,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$homeViewModelHash();
+  String debugGetCreateSourceHash() => _$backendProfileHash();
 
   @$internal
   @override
-  HomeViewModel create() => HomeViewModel();
+  $FutureProviderElement<Map<String, dynamic>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Map<String, dynamic>> create(Ref ref) {
+    return backendProfile(ref);
+  }
+}
+
+String _$backendProfileHash() => r'd02ec803407506681b2d938823b86840c9fec9e2';
+
+/// The signed-in owner's pages. An empty list shows the first-visit layout.
+// ponytail: sample data until the backend has GET /v1/pages; return const [] to preview the first visit.
+
+@ProviderFor(myPages)
+final myPagesProvider = MyPagesProvider._();
+
+/// The signed-in owner's pages. An empty list shows the first-visit layout.
+// ponytail: sample data until the backend has GET /v1/pages; return const [] to preview the first visit.
+
+final class MyPagesProvider
+    extends $FunctionalProvider<List<LivePage>, List<LivePage>, List<LivePage>>
+    with $Provider<List<LivePage>> {
+  /// The signed-in owner's pages. An empty list shows the first-visit layout.
+  // ponytail: sample data until the backend has GET /v1/pages; return const [] to preview the first visit.
+  MyPagesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'myPagesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$myPagesHash();
+
+  @$internal
+  @override
+  $ProviderElement<List<LivePage>> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  List<LivePage> create(Ref ref) {
+    return myPages(ref);
+  }
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(HomeState value) {
+  Override overrideWithValue(List<LivePage> value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<HomeState>(value),
+      providerOverride: $SyncValueProvider<List<LivePage>>(value),
     );
   }
 }
 
-String _$homeViewModelHash() => r'f90149957a60a3c3a7132ab9fc96eb5f3d868a76';
-
-/// View model for the home (products) screen.
-///
-/// API outcomes are surfaced via [DialogService] (toasts) and
-/// [NotificationService] (system notifications). State holds only data
-/// and in-flight flags — messaging is side-effectful.
-
-abstract class _$HomeViewModel extends $Notifier<HomeState> {
-  HomeState build();
-  @$mustCallSuper
-  @override
-  void runBuild() {
-    final ref = this.ref as $Ref<HomeState, HomeState>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<HomeState, HomeState>,
-              HomeState,
-              Object?,
-              Object?
-            >;
-    element.handleCreate(ref, build);
-  }
-}
+String _$myPagesHash() => r'76392ab023a2521de68bf1005a86ddcc2fd9ef94';

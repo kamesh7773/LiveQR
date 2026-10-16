@@ -8,19 +8,19 @@ part of 'api_client.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Function-style provider — returns a fully configured Dio instance.
-/// Consumers read `ref.watch(apiClientProvider)` to get the Dio directly.
+/// Dio for the LiveQR API. Sends the signed-in user's Firebase ID token,
+/// which the backend verifies on every `/v1` request.
 
 @ProviderFor(apiClient)
 final apiClientProvider = ApiClientProvider._();
 
-/// Function-style provider — returns a fully configured Dio instance.
-/// Consumers read `ref.watch(apiClientProvider)` to get the Dio directly.
+/// Dio for the LiveQR API. Sends the signed-in user's Firebase ID token,
+/// which the backend verifies on every `/v1` request.
 
 final class ApiClientProvider extends $FunctionalProvider<Dio, Dio, Dio>
     with $Provider<Dio> {
-  /// Function-style provider — returns a fully configured Dio instance.
-  /// Consumers read `ref.watch(apiClientProvider)` to get the Dio directly.
+  /// Dio for the LiveQR API. Sends the signed-in user's Firebase ID token,
+  /// which the backend verifies on every `/v1` request.
   ApiClientProvider._()
     : super(
         from: null,
@@ -54,4 +54,4 @@ final class ApiClientProvider extends $FunctionalProvider<Dio, Dio, Dio>
   }
 }
 
-String _$apiClientHash() => r'cb2b46abd126321686a95529c159da94df8473d5';
+String _$apiClientHash() => r'edd27908449e7e04f1775c2d0822115242d6ff04';
