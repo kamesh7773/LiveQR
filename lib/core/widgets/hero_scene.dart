@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
 import '../theme/app_colors.dart';
-import '../theme/app_theme.dart';
 import 'living_qr.dart';
 import 'phone_preview.dart';
 
@@ -411,41 +410,6 @@ class SceneToast extends StatelessWidget {
   }
 }
 
-/// "248 scans this week" style figure for a [SceneToast].
-class ScanFigure extends StatelessWidget {
-  const ScanFigure({super.key, required this.count});
-
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.baseline,
-      textBaseline: TextBaseline.alphabetic,
-      children: [
-        Text(
-          '$count',
-          style: const TextStyle(
-            fontFamily: AppTheme.displayFont,
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(width: 8),
-        const Text(
-          'scans this week',
-          style: TextStyle(
-            fontWeight: FontWeight.w500,
-            color: AppColors.textSecondary,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Pulsing green dot for "someone just scanned".
 class PulseDot extends HookWidget {
   const PulseDot({super.key});
 

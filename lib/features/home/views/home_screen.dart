@@ -13,13 +13,15 @@ import '../../../core/widgets/hero_scene.dart';
 import '../../../core/widgets/phone_preview.dart';
 import '../../../core/widgets/live_qr_logo.dart';
 import '../../auth/view_models/auth_view_model.dart';
+import '../../auth/views/login_screen.dart';
+import '../../onboarding/views/onboarding_dialog.dart';
 import '../../pages/repositories/pages_repository.dart';
 import '../../pages/view_models/page_draft_view_model.dart';
 import '../../pages/views/page_draft_screen.dart';
-import '../models/live_page.dart';
+import '../models/page_type.dart';
 import '../view_models/home_view_model.dart';
-import 'widgets/pages_shelf.dart';
 import 'widgets/prompt_composer.dart';
+import 'widgets/sign_in_prompt.dart';
 
 /// Starter text a page-type shortcut puts in the composer.
 const _starters = {
@@ -29,28 +31,60 @@ const _starters = {
   PageType.event: 'An event page for ',
 };
 
+/// The page types offered as starting points.
+const _types = [
+  (
+    type: PageType.business,
+    title: 'Business page',
+    note: 'Shop, salon, studio',
+    icon: 'Blue-Storefront-App-Icon',
+    tint: Color(0xFF3B82F6),
+  ),
+  (
+    type: PageType.menu,
+    title: 'Restaurant menu',
+    note: 'Café, kitchen, bakery',
+    icon: 'Minimal-Coral-Cutlery-Icon',
+    tint: Color(0xFFF43F5E),
+  ),
+  (
+    type: PageType.card,
+    title: 'Business card',
+    note: 'You, in one scan',
+    icon: 'Pastel-Purple-Profile-Card-Icon',
+    tint: Color(0xFFA855F7),
+  ),
+  (
+    type: PageType.event,
+    title: 'Event',
+    note: 'Invites and RSVPs',
+    icon: 'Minimalist-Pink-Calendar-App-Icon',
+    tint: Color(0xFFEC4899),
+  ),
+];
+
 // Same limits as the backend (src/routes/ai.js).
 const _maxPhotos = 6;
 const _maxLinks = 5;
 
-// ponytail: placeholder address until pages are published by the backend.
+// The hero scene's example QR (an illustration, not a real page).
 const _sampleQrData = 'https://liveqr.example/p/daily-brew';
 
 class HomeScreen extends HookConsumerWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.guideOnOpen = true});
+
+  /// Opens the guided questions when the website is opened (tests turn it off).
+  final bool guideOnOpen;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Keeps the backend user record in sync (GET /v1/me upserts it).
-    ref.watch(backendProfileProvider);
-    final user = ref.watch(authUserProvider).value;
-    final pages = ref.watch(myPagesProvider);
-    final firstVisit = pages.isEmpty;
+    final auth = ref.watch(authUserProvider);
+    final user = auth.value;
+    // Keeps the backend user record in sync (GET /v1/me upserts it). Guests have none.
+    if (user != null) ref.watch(backendProfileProvider);
 
     final prompt = useTextEditingController();
     final promptFocus = useFocusNode();
-    final scroll = useScrollController();
-    final pagesKey = useMemoized(GlobalKey.new);
     final dialog = ref.read(dialogServiceProvider.notifier);
 
     final name = _firstName(user?.displayName, user?.email);
@@ -64,6 +98,36 @@ class HomeScreen extends HookConsumerWidget {
     final photos = useState<List<ComposerPhoto>>(const []);
     final links = useState<List<String>>(const []);
 
+    /// Uploads [photo] once, however often it's asked; false if the upload failed.
+    Future<bool> ensureUploaded(ComposerPhoto photo) {
+      final running = photo.upload;
+      if (running != null) return running;
+      final upload = photo.upload = ref
+          .read(pagesRepositoryProvider)
+          .uploadPhoto(photo.bytes, photo.name)
+          .then(
+            (id) {
+              photo.id = id;
+              return true;
+            },
+            onError: (Object e) {
+              photos.value = [...photos.value]..remove(photo);
+              dialog.showError(
+                e is DioException
+                    ? (e.message ?? 'Upload failed')
+                    : 'Upload failed',
+              );
+              return false;
+            },
+          )
+          // Repaint so the thumbnail drops its spinner.
+          .whenComplete(() {
+            if (context.mounted) photos.value = [...photos.value];
+          });
+      photos.value = [...photos.value]; // show the spinner
+      return upload;
+    }
+
     Future<void> addPhotos() async {
       final room = _maxPhotos - photos.value.length;
       if (room <= 0) {
@@ -76,28 +140,14 @@ class HomeScreen extends HookConsumerWidget {
       if (picked.isEmpty || !context.mounted) return;
 
       final added = [
-        for (final file in picked) ComposerPhoto(await file.readAsBytes()),
+        for (final file in picked)
+          ComposerPhoto(await file.readAsBytes(), file.name),
       ];
       photos.value = [...photos.value, ...added];
-
-      final repo = ref.read(pagesRepositoryProvider);
-      await Future.wait([
-        for (final (i, photo) in added.indexed)
-          repo
-              .uploadPhoto(picked[i])
-              .then((id) => photo.id = id)
-              .catchError((Object e) {
-                photos.value = [...photos.value]..remove(photo);
-                dialog.showError(
-                  e is DioException
-                      ? (e.message ?? 'Upload failed')
-                      : 'Upload failed',
-                );
-                return '';
-              })
-              // Repaint so the thumbnail drops its spinner.
-              .whenComplete(() => photos.value = [...photos.value]),
-      ]);
+      // Guests keep them on screen; they upload after signing in (see create).
+      if (ref.read(authUserProvider).value != null) {
+        await Future.wait(added.map(ensureUploaded));
+      }
     }
 
     Future<void> addLink() async {
@@ -111,7 +161,7 @@ class HomeScreen extends HookConsumerWidget {
       }
     }
 
-    void create() {
+    Future<void> create() async {
       if (prompt.text.trim().isEmpty) {
         promptFocus.requestFocus();
         return;
@@ -122,71 +172,81 @@ class HomeScreen extends HookConsumerWidget {
         );
         return;
       }
-      if (photos.value.any((p) => p.id == null)) {
-        dialog.showInfo('Wait a moment, your photos are still uploading.');
-        return;
+      // Guests sign in first; this screen stays underneath, so the description,
+      // photos and links are all still here when they come back.
+      if (ref.read(authUserProvider).value == null) {
+        final signIn = await showSignInPrompt(
+          context,
+          photos: photos.value.length,
+          links: links.value.length,
+        );
+        if (!signIn || !context.mounted) return;
+        if (!await LoginScreen.open(context) || !context.mounted) return;
       }
+      final uploaded = await Future.wait(photos.value.map(ensureUploaded));
+      if (!context.mounted || uploaded.contains(false)) return;
+
       final request = PageRequest(
         prompt.text.trim(),
         photoIds: [for (final p in photos.value) p.id!],
         links: links.value,
       );
-      Navigator.of(context).push(
+      await Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (_) => PageDraftScreen(request: request),
         ),
       );
     }
 
-    void showPages() {
-      final target = pagesKey.currentContext;
-      if (target == null) return;
-      Scrollable.ensureVisible(
-        target,
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
+    // The guided questions fill the prompt; "Generate my page" goes straight on to Create.
+    Future<void> openGuide() async {
+      final result = await showOnboarding(
+        context,
+        photos: photos,
+        onAddPhotos: addPhotos,
       );
+      if (result == null || !context.mounted) return;
+      if (result.prompt.isNotEmpty) {
+        prompt.text = result.prompt;
+        prompt.selection = TextSelection.collapsed(offset: prompt.text.length);
+      }
+      if (result.generate) {
+        await create();
+      } else {
+        promptFocus.requestFocus();
+      }
     }
 
-    final featured = pages.where((p) => p.isLive).firstOrNull;
-    final scene = HeroScene(
-      screen: featured != null ? previewFor(featured) : const MenuPagePreview(),
+    useEffect(() {
+      if (guideOnOpen) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (context.mounted) openGuide();
+        });
+      }
+      return null;
+    }, const []);
+
+    const scene = HeroScene(
+      screen: MenuPagePreview(),
       qrData: _sampleQrData,
-      qrLabel: featured != null ? '${featured.title} · Live' : 'Scan to open',
-      badge: featured == null ? 'EXAMPLE' : null,
-      toasts: featured == null
-          ? const []
-          : [
-              const SceneToast(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    PulseDot(),
-                    SizedBox(width: 10),
-                    Text('Someone just scanned'),
-                  ],
-                ),
-              ),
-              SceneToast(child: ScanFigure(count: featured.scansThisWeek)),
-            ],
+      qrLabel: 'Scan to open',
+      badge: 'EXAMPLE',
     );
 
     final copy = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _Hello(text: firstVisit ? 'Welcome, $name' : '${_greeting()}, $name'),
-        const SizedBox(height: 26),
-        _Headline(
-          firstVisit ? 'One sentence.' : 'What will people',
-          firstVisit ? 'One live page.' : 'scan next?',
+        _Hello(
+          text: user == null ? 'Welcome to Live QR' : '${_greeting()}, $name',
         ),
+        const SizedBox(height: 26),
+        const _Headline('One sentence.', 'One live page.'),
         const SizedBox(height: 26),
         PromptComposer(
           controller: prompt,
           focusNode: promptFocus,
-          hint: firstVisit
-              ? 'e.g. A bakery in Jodhpur with cakes, timings and a call button'
-              : 'Describe a business, a menu, an event…',
+          hint:
+              'e.g. A bakery in Jodhpur with cakes, timings and a call button',
           onSubmit: create,
           photos: photos.value,
           links: links.value,
@@ -196,8 +256,18 @@ class HomeScreen extends HookConsumerWidget {
               photos.value = [...photos.value]..remove(photo),
           onRemoveLink: (link) => links.value = [...links.value]..remove(link),
         ),
-        const SizedBox(height: 26),
-        if (firstVisit) const _Steps() else _TypeChips(onPick: start),
+        const SizedBox(height: 10),
+        TextButton.icon(
+          onPressed: openGuide,
+          style: TextButton.styleFrom(
+            foregroundColor: AppColors.violet,
+            minimumSize: const Size(44, 44),
+          ),
+          icon: const Icon(Icons.auto_awesome_rounded, size: 18),
+          label: const Text('Not sure what to write? Answer a few questions'),
+        ),
+        const SizedBox(height: 16),
+        const _Steps(),
       ],
     );
 
@@ -205,7 +275,6 @@ class HomeScreen extends HookConsumerWidget {
       backgroundColor: AppColors.sky,
       body: AuroraBackground(
         child: SingleChildScrollView(
-          controller: scroll,
           padding: EdgeInsets.symmetric(
             horizontal: MediaQuery.sizeOf(context).width < 720 ? 16 : 48,
             vertical: 20,
@@ -217,10 +286,17 @@ class HomeScreen extends HookConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _NavBar(
+                    // null while Firebase is still restoring a saved sign-in.
+                    signedIn: auth.isLoading ? null : user != null,
                     email: user?.email,
                     initials: _initials(user?.displayName, user?.email),
-                    onPages: showPages,
-                    onAnalytics: () => comingSoon('Analytics'),
+                    onSignIn: () => LoginScreen.open(context),
+                    onPages: user == null
+                        ? () => LoginScreen.open(context)
+                        : () => comingSoon('My pages'),
+                    onAnalytics: user == null
+                        ? () => LoginScreen.open(context)
+                        : () => comingSoon('Analytics'),
                   ),
                   LayoutBuilder(
                     builder: (context, c) => c.maxWidth >= 1000
@@ -246,16 +322,7 @@ class HomeScreen extends HookConsumerWidget {
                           ),
                   ),
                   const SizedBox(height: 32),
-                  KeyedSubtree(
-                    key: pagesKey,
-                    child: firstVisit
-                        ? _TypeTiles(onPick: start)
-                        : _PagesSection(
-                            pages: pages,
-                            onOpen: (_) => comingSoon('The page editor'),
-                            onNew: () => promptFocus.requestFocus(),
-                          ),
-                  ),
+                  _TypeTiles(onPick: start),
                   const SizedBox(height: 120),
                 ],
               ),
@@ -294,12 +361,17 @@ String _greeting() {
 
 class _NavBar extends HookConsumerWidget {
   const _NavBar({
+    required this.signedIn,
+    required this.onSignIn,
     required this.email,
     required this.initials,
     required this.onPages,
     required this.onAnalytics,
   });
 
+  /// null while it isn't known yet: shows neither the avatar nor Sign in.
+  final bool? signedIn;
+  final VoidCallback onSignIn;
   final String? email;
   final String initials;
   final VoidCallback onPages;
@@ -355,66 +427,82 @@ class _NavBar extends HookConsumerWidget {
             tab('Analytics', onAnalytics),
           ],
           const Spacer(),
-          PopupMenuButton<void>(
-            tooltip: 'Account menu',
-            offset: const Offset(0, 54),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+          if (signedIn == false)
+            FilledButton(
+              onPressed: onSignIn,
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.textPrimary,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 22,
+                  vertical: 16,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('Sign in'),
             ),
-            itemBuilder: (_) => [
-              if (email != null)
+          if (signedIn ?? false)
+            PopupMenuButton<void>(
+              tooltip: 'Account menu',
+              offset: const Offset(0, 54),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              itemBuilder: (_) => [
+                if (email != null)
+                  PopupMenuItem(
+                    enabled: false,
+                    child: Text(
+                      email!,
+                      style: const TextStyle(color: AppColors.textSecondary),
+                    ),
+                  ),
                 PopupMenuItem(
-                  enabled: false,
-                  child: Text(
-                    email!,
-                    style: const TextStyle(color: AppColors.textSecondary),
+                  onTap: signOut,
+                  child: const Row(
+                    children: [
+                      Icon(Icons.logout_rounded, size: 20),
+                      SizedBox(width: 12),
+                      Text('Sign out'),
+                    ],
                   ),
                 ),
-              PopupMenuItem(
-                onTap: signOut,
-                child: const Row(
-                  children: [
-                    Icon(Icons.logout_rounded, size: 20),
-                    SizedBox(width: 12),
-                    Text('Sign out'),
-                  ],
-                ),
-              ),
-            ],
-            child: Container(
-              width: 44,
-              height: 44,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: const SweepGradient(
-                  colors: [
-                    Color(0xFF3B82F6),
-                    AppColors.violet,
-                    AppColors.magenta,
-                    Color(0xFF3B82F6),
-                  ],
-                ),
-                border: Border.all(color: Colors.white, width: 3),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.violet.withValues(alpha: .5),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
-                    spreadRadius: -6,
+              ],
+              child: Container(
+                width: 44,
+                height: 44,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const SweepGradient(
+                    colors: [
+                      Color(0xFF3B82F6),
+                      AppColors.violet,
+                      AppColors.magenta,
+                      Color(0xFF3B82F6),
+                    ],
                   ),
-                ],
-              ),
-              child: Text(
-                initials,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
+                  border: Border.all(color: Colors.white, width: 3),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.violet.withValues(alpha: .5),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                      spreadRadius: -6,
+                    ),
+                  ],
+                ),
+                child: Text(
+                  initials,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -499,91 +587,6 @@ class _Headline extends StatelessWidget {
   }
 }
 
-class _TypeChips extends StatelessWidget {
-  const _TypeChips({required this.onPick});
-
-  final ValueChanged<PageType> onPick;
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: [
-        for (final t in _types)
-          Semantics(
-            button: true,
-            label: 'Start a ${t.title}',
-            excludeSemantics: true,
-            child: GestureDetector(
-              onTap: () => onPick(t.type),
-              child: MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: GlassPanel(
-                  radius: 99,
-                  padding: const EdgeInsets.fromLTRB(5, 5, 16, 5),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Image.asset(
-                        'assets/images/optimized/${t.icon}.png',
-                        width: 34,
-                        height: 34,
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        t.short,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-const _types = [
-  (
-    type: PageType.business,
-    title: 'Business page',
-    short: 'Business',
-    note: 'Shop, salon, studio',
-    icon: 'Blue-Storefront-App-Icon',
-    tint: Color(0xFF3B82F6),
-  ),
-  (
-    type: PageType.menu,
-    title: 'Restaurant menu',
-    short: 'Menu',
-    note: 'Café, kitchen, bakery',
-    icon: 'Minimal-Coral-Cutlery-Icon',
-    tint: Color(0xFFF43F5E),
-  ),
-  (
-    type: PageType.card,
-    title: 'Business card',
-    short: 'Card',
-    note: 'You, in one scan',
-    icon: 'Pastel-Purple-Profile-Card-Icon',
-    tint: Color(0xFFA855F7),
-  ),
-  (
-    type: PageType.event,
-    title: 'Event',
-    short: 'Event',
-    note: 'Invites and RSVPs',
-    icon: 'Minimalist-Pink-Calendar-App-Icon',
-    tint: Color(0xFFEC4899),
-  ),
-];
-
 class _Steps extends StatelessWidget {
   const _Steps();
 
@@ -645,74 +648,6 @@ class _SectionTitle extends StatelessWidget {
   );
 }
 
-class _PagesSection extends StatelessWidget {
-  const _PagesSection({
-    required this.pages,
-    required this.onOpen,
-    required this.onNew,
-  });
-
-  final List<LivePage> pages;
-  final ValueChanged<LivePage> onOpen;
-  final VoidCallback onNew;
-
-  @override
-  Widget build(BuildContext context) {
-    final scans = pages.fold(0, (sum, p) => sum + p.scansThisWeek);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Wrap(
-          alignment: WrapAlignment.spaceBetween,
-          crossAxisAlignment: WrapCrossAlignment.end,
-          runSpacing: 16,
-          children: [
-            const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _SectionTitle('Your pages'),
-                SizedBox(height: 8),
-                Text(
-                  'Tap a page to edit it. Your QR codes never change.',
-                  style: TextStyle(color: AppColors.textSecondary),
-                ),
-              ],
-            ),
-            GlassPanel(
-              radius: 18,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '$scans',
-                    style: const TextStyle(
-                      fontFamily: AppTheme.displayFont,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'scans\nlast 7 days',
-                    style: TextStyle(
-                      fontSize: 13,
-                      height: 1.3,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 56),
-        PagesShelf(pages: pages, onOpen: onOpen, onNew: onNew),
-      ],
-    );
-  }
-}
-
 class _TypeTiles extends StatelessWidget {
   const _TypeTiles({required this.onPick});
 
@@ -752,14 +687,7 @@ class _TypeTile extends StatefulWidget {
     required this.onTap,
   });
 
-  final ({
-    PageType type,
-    String title,
-    String short,
-    String note,
-    String icon,
-    Color tint,
-  })
+  final ({PageType type, String title, String note, String icon, Color tint})
   type;
   final bool compact;
   final VoidCallback onTap;

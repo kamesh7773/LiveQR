@@ -1,4 +1,6 @@
 import 'dart:math' as math;
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -37,9 +39,31 @@ class LivingQr extends HookWidget {
   }
 }
 
+/// The QR for [data] as a print-ready PNG, about [size] pixels square: solid, joined square
+/// modules (separated dots trip up some scanners), a whole number of pixels per module,
+/// and the four-module white quiet zone scanners expect.
+Future<Uint8List> qrPng(String data, {int size = 1024}) async {
+  final shape = qrModulePath(data, solid: true);
+  // qrModulePath already has a one-module margin; add three more for the standard four.
+  final modules = shape.units + 6;
+  final pixelsPerModule = size ~/ modules;
+  final side = pixelsPerModule * modules;
+  final recorder = ui.PictureRecorder();
+  Canvas(recorder)
+    ..drawColor(Colors.white, BlendMode.src)
+    ..scale(pixelsPerModule.toDouble())
+    ..translate(3, 3)
+    ..drawPath(shape.path, Paint()..color = const Color(0xFF1E1B4B));
+  final image = await recorder.endRecording().toImage(side, side);
+  final png = await image.toByteData(format: ui.ImageByteFormat.png);
+  image.dispose();
+  return png!.buffer.asUint8List();
+}
+
 /// Module path in QR units (one unit per module, plus a one-module margin).
+/// [solid] draws full square modules that touch, for print; otherwise rounded dots.
 @visibleForTesting
-({Path path, int units}) qrModulePath(String data) {
+({Path path, int units}) qrModulePath(String data, {bool solid = false}) {
   final image = QrImage(
     QrCode(
       payload: QrPayload.fromString(data),
@@ -54,6 +78,10 @@ class LivingQr extends HookWidget {
   for (var y = 0; y < n; y++) {
     for (var x = 0; x < n; x++) {
       if (!image.isDark(y, x) || inFinder(x, y)) continue;
+      if (solid) {
+        path.addRect(Rect.fromLTWH(x + 1.0, y + 1.0, 1, 1));
+        continue;
+      }
       path.addRRect(
         RRect.fromRectAndRadius(
           Rect.fromLTWH(x + 1.08, y + 1.08, .84, .84),

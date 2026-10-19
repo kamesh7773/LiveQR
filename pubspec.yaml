@@ -54,6 +54,9 @@ dependencies:
   # Photo picking for page images (web file dialog, gallery on mobile)
   image_picker: ^1.2.4
 
+  # Browser APIs for the generated-page preview (iframe, new tab); web-only code
+  web: ^1.1.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

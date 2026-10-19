@@ -1,13 +1,14 @@
+import 'package:base_flutter_application/core/services/navigation_service.dart';
 import 'package:base_flutter_application/features/auth/view_models/auth_view_model.dart';
-import 'package:base_flutter_application/features/home/models/live_page.dart';
 import 'package:base_flutter_application/features/home/view_models/home_view_model.dart';
 import 'package:base_flutter_application/features/home/views/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:toastification/toastification.dart';
 
-Future<void> pumpHome(WidgetTester tester, List<LivePage> pages) async {
+Future<void> pumpHome(WidgetTester tester, {bool guide = false}) async {
   tester.view.physicalSize = const Size(1440, 1000);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
@@ -16,9 +17,18 @@ Future<void> pumpHome(WidgetTester tester, List<LivePage> pages) async {
       overrides: [
         authUserProvider.overrideWith((ref) => Stream.value(null)),
         backendProfileProvider.overrideWith((ref) async => <String, dynamic>{}),
-        myPagesProvider.overrideWith((ref) => pages),
       ],
-      child: const MaterialApp(home: HomeScreen()),
+      // Same wiring as the app: dialogs find the navigator through NavigationService.
+      child: ToastificationWrapper(
+        child: Consumer(
+          builder: (context, ref, _) => MaterialApp(
+            navigatorKey: ref
+                .read(navigationServiceProvider.notifier)
+                .navigatorKey,
+            home: HomeScreen(guideOnOpen: guide),
+          ),
+        ),
+      ),
     ),
   );
   // Animations repeat forever, so pump a few frames instead of settling.
@@ -42,32 +52,20 @@ Future<void> loadFonts() async {
 void main() {
   setUpAll(loadFonts);
 
-  testWidgets('owner with pages sees the shelf', (tester) async {
-    await pumpHome(tester, const [
-      LivePage(
-        id: 'a',
-        title: 'The Daily Brew',
-        type: PageType.menu,
-        isLive: true,
-        scansThisWeek: 12,
-      ),
-    ]);
-    expect(find.text('scan next?'), findsOneWidget);
-    expect(find.text('Your pages'), findsOneWidget);
-    expect(find.text('New page'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('new owner sees the first-visit layout', (tester) async {
-    await pumpHome(tester, const []);
-    expect(find.text('One live page.'), findsOneWidget);
-    expect(find.text('Or pick a starting point'), findsOneWidget);
-    expect(find.text('EXAMPLE'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
+  testWidgets(
+    'home shows the example scene and starting points, no sample pages',
+    (tester) async {
+      await pumpHome(tester);
+      expect(find.text('One live page.'), findsOneWidget);
+      expect(find.text('Or pick a starting point'), findsOneWidget);
+      expect(find.text('EXAMPLE'), findsOneWidget);
+      expect(find.text('Your pages'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('a page-type shortcut starts the prompt', (tester) async {
-    await pumpHome(tester, const []);
+    await pumpHome(tester);
     await tester.ensureVisible(find.text('Restaurant menu'));
     await tester.pump(const Duration(milliseconds: 600));
     await tester.tap(find.text('Restaurant menu'));
@@ -76,7 +74,7 @@ void main() {
   });
 
   testWidgets('Link adds a checked web address as a chip', (tester) async {
-    await pumpHome(tester, const []);
+    await pumpHome(tester);
     await tester.tap(find.text('Link'));
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -94,4 +92,62 @@ void main() {
     expect(find.text('instagram.com'), findsOneWidget);
     expect(find.byType(InputChip), findsOneWidget);
   });
+
+  testWidgets(
+    'a guest pressing Create is asked to sign in, keeping the prompt',
+    (tester) async {
+      await pumpHome(tester);
+      expect(
+        find.text('Sign in'),
+        findsOneWidget,
+      ); // navbar, instead of the avatar
+      expect(find.text('Welcome to Live QR'), findsOneWidget);
+
+      await tester.enterText(find.byType(TextField), 'A bakery in Pune');
+      await tester.tap(find.text('Create'));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Sign in to create your page'), findsOneWidget);
+
+      await tester.tap(find.text('Not now'));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Sign in to create your page'), findsNothing);
+      expect(find.text('A bakery in Pune'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'guided questions open with the site; Skip puts the answers in the prompt',
+    (tester) async {
+      await pumpHome(tester, guide: true);
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.text('What would you like to create?'), findsOneWidget);
+
+      await tester.tap(
+        find.text('Business page').last,
+      ); // the dialog's card, above Home's tile
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.text('What type of business do you run?'), findsOneWidget);
+
+      await tester.tap(find.text('Jewellery'));
+      await tester.pump();
+      await tester.tap(find.text('Continue'));
+      await tester.pump(const Duration(milliseconds: 400));
+
+      await tester.enterText(
+        find.byType(TextFormField).first,
+        'Kalyan Jewellers',
+      );
+      await tester.pump();
+      await tester.tap(find.text('Skip'));
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.text('What would you like to create?'), findsNothing);
+      expect(
+        find.text(
+          'Page type: Business page\nType of business: Jewellery\nBusiness name: Kalyan Jewellers',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
 }

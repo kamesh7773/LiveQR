@@ -7,7 +7,7 @@ import '../repositories/auth_repository.dart';
 
 part 'auth_view_model.g.dart';
 
-/// Signed-in Firebase user, or null. Drives [AuthGate].
+/// Signed-in Firebase user, or null (a guest).
 @Riverpod(keepAlive: true)
 Stream<User?> authUser(Ref ref) =>
     ref.watch(authRepositoryProvider).authStateChanges();

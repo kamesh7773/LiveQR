@@ -8,17 +8,17 @@ part of 'auth_view_model.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Signed-in Firebase user, or null. Drives [AuthGate].
+/// Signed-in Firebase user, or null (a guest).
 
 @ProviderFor(authUser)
 final authUserProvider = AuthUserProvider._();
 
-/// Signed-in Firebase user, or null. Drives [AuthGate].
+/// Signed-in Firebase user, or null (a guest).
 
 final class AuthUserProvider
     extends $FunctionalProvider<AsyncValue<User?>, User?, Stream<User?>>
     with $FutureModifier<User?>, $StreamProvider<User?> {
-  /// Signed-in Firebase user, or null. Drives [AuthGate].
+  /// Signed-in Firebase user, or null (a guest).
   AuthUserProvider._()
     : super(
         from: null,

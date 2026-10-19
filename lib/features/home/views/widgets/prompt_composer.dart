@@ -45,20 +45,23 @@ class PromptComposer extends StatelessWidget {
   }
 
   Widget _inner(bool narrow) {
-    Widget tool(IconData icon, String label, VoidCallback onPressed) =>
-        TextButton.icon(
-          onPressed: onPressed,
-          style: TextButton.styleFrom(
-            foregroundColor: AppColors.textSecondary,
-            minimumSize: const Size(44, 44),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+    // On narrow screens only the icon shows; the tooltip still names it (and for screen readers).
+    Widget tool(IconData icon, String label, VoidCallback onPressed) => Tooltip(
+      message: label,
+      child: TextButton.icon(
+        onPressed: onPressed,
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.textSecondary,
+          minimumSize: const Size(44, 44),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
-          icon: Icon(icon, size: 20),
-          label: narrow ? const SizedBox.shrink() : Text(label),
-        );
+        ),
+        icon: Icon(icon, size: 20),
+        label: narrow ? const SizedBox.shrink() : Text(label),
+      ),
+    );
 
     return Container(
       decoration: BoxDecoration(
@@ -217,12 +220,19 @@ class GradientButton extends StatelessWidget {
   }
 }
 
-/// A picked photo: shown from its bytes at once, [id] set once the upload finishes.
+/// A picked photo: shown from its bytes at once. It uploads when the owner is signed in
+/// (straight away, or after signing in on Create); [id] is set once that finishes.
 class ComposerPhoto {
-  ComposerPhoto(this.bytes);
+  ComposerPhoto(this.bytes, this.name);
 
   final Uint8List bytes;
+  final String name;
   String? id;
+
+  /// The running or finished upload; completes with false if it failed.
+  Future<bool>? upload;
+
+  bool get uploading => upload != null && id == null;
 }
 
 class _Thumb extends StatelessWidget {
@@ -243,7 +253,7 @@ class _Thumb extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
             child: Image.memory(photo.bytes, fit: BoxFit.cover),
           ),
-          if (photo.id == null)
+          if (photo.uploading)
             DecoratedBox(
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: .6),

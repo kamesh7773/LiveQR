@@ -9,20 +9,21 @@ part of 'page_draft_view_model.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// The page generated from [request]. Invalidate it to generate again.
-// ponytail: not saved anywhere yet — leaving the screen discards it until pages live in MongoDB.
 
 @ProviderFor(pageDraft)
 final pageDraftProvider = PageDraftFamily._();
 
 /// The page generated from [request]. Invalidate it to generate again.
-// ponytail: not saved anywhere yet — leaving the screen discards it until pages live in MongoDB.
 
 final class PageDraftProvider
     extends
-        $FunctionalProvider<AsyncValue<PageSpec>, PageSpec, FutureOr<PageSpec>>
-    with $FutureModifier<PageSpec>, $FutureProvider<PageSpec> {
+        $FunctionalProvider<
+          AsyncValue<GeneratedPage>,
+          GeneratedPage,
+          FutureOr<GeneratedPage>
+        >
+    with $FutureModifier<GeneratedPage>, $FutureProvider<GeneratedPage> {
   /// The page generated from [request]. Invalidate it to generate again.
-  // ponytail: not saved anywhere yet — leaving the screen discards it until pages live in MongoDB.
   PageDraftProvider._({
     required PageDraftFamily super.from,
     required PageRequest super.argument,
@@ -46,11 +47,12 @@ final class PageDraftProvider
 
   @$internal
   @override
-  $FutureProviderElement<PageSpec> $createElement($ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
+  $FutureProviderElement<GeneratedPage> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
-  FutureOr<PageSpec> create(Ref ref) {
+  FutureOr<GeneratedPage> create(Ref ref) {
     final argument = this.argument as PageRequest;
     return pageDraft(ref, argument);
   }
@@ -66,13 +68,12 @@ final class PageDraftProvider
   }
 }
 
-String _$pageDraftHash() => r'5db449bc7801bbee19bb005c20b7f5a2231810ec';
+String _$pageDraftHash() => r'a2fbd4d7f1276b71e72216855c7f695bce1d3019';
 
 /// The page generated from [request]. Invalidate it to generate again.
-// ponytail: not saved anywhere yet — leaving the screen discards it until pages live in MongoDB.
 
 final class PageDraftFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<PageSpec>, PageRequest> {
+    with $FunctionalFamilyOverride<FutureOr<GeneratedPage>, PageRequest> {
   PageDraftFamily._()
     : super(
         retry: null,
@@ -83,7 +84,6 @@ final class PageDraftFamily extends $Family
       );
 
   /// The page generated from [request]. Invalidate it to generate again.
-  // ponytail: not saved anywhere yet — leaving the screen discards it until pages live in MongoDB.
 
   PageDraftProvider call(PageRequest request) =>
       PageDraftProvider._(argument: request, from: this);

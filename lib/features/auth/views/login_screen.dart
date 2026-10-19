@@ -15,11 +15,25 @@ import 'widgets/login_hero.dart';
 
 const _fieldBorder = Color(0xFFE2E8F0);
 
-class LoginScreen extends HookWidget {
+/// Sign in or create an account. Opened on top of another screen, it closes itself
+/// with `true` as soon as the user is signed in, so the caller can carry on.
+class LoginScreen extends HookConsumerWidget {
   const LoginScreen({super.key});
 
+  /// Opens the login screen; completes with true once the user has signed in.
+  static Future<bool> open(BuildContext context) async =>
+      await Navigator.of(
+        context,
+      ).push<bool>(MaterialPageRoute(builder: (_) => const LoginScreen())) ??
+      false;
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen(authUserProvider, (_, next) {
+      if (next.value != null && Navigator.of(context).canPop()) {
+        Navigator.of(context).pop(true);
+      }
+    });
     final isSignUp = useState(false);
     void toggleMode() => isSignUp.value = !isSignUp.value;
 
@@ -111,6 +125,14 @@ class _TopBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
+        if (Navigator.of(context).canPop()) ...[
+          IconButton(
+            tooltip: 'Back',
+            onPressed: () => Navigator.of(context).pop(false),
+            icon: const Icon(Icons.arrow_back_rounded),
+          ),
+          const SizedBox(width: 8),
+        ],
         const LiveQrLogo(size: 46),
         const Spacer(),
         if (showPrompt) ...[

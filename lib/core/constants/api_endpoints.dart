@@ -12,6 +12,9 @@ class ApiEndpoints {
   // AI: description → page spec (takes several seconds)
   static const String generatePage = '/ai/generate';
 
+  // Pages: freeze the draft as a new version and (first time) give it its public link
+  static String publishPage(String id) => '/pages/$id/publish';
+
   // Images (multipart field "file")
   static const String uploads = '/uploads';
 }

@@ -1,4 +1,7 @@
+import 'dart:ui' as ui;
+
 import 'package:base_flutter_application/core/widgets/living_qr.dart';
+import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:qr/qr.dart';
 
@@ -51,5 +54,32 @@ void main() {
         reason: 'finder centre at ($fx, $fy)',
       );
     }
+  });
+
+  testWidgets('QR download is a PNG with a white quiet zone and dark finders', (
+    tester,
+  ) async {
+    await tester.runAsync(() async {
+      final png = await qrPng(data, size: 512);
+      expect(png.sublist(1, 4), 'PNG'.codeUnits);
+
+      final image = await decodeImageFromList(png);
+      final n = qrModulePath(data).units - 2;
+      // Whole pixels per module; n modules plus 4 quiet modules on each side.
+      final module = 512 ~/ (n + 8);
+      expect([image.width, image.height], [module * (n + 8), module * (n + 8)]);
+      final rgba = (await image.toByteData(
+        format: ui.ImageByteFormat.rawRgba,
+      ))!;
+      int red(double x, double y) =>
+          rgba.getUint8((y.round() * image.width + x.round()) * 4);
+
+      expect(red(module * 2, module * 2), 255, reason: 'quiet zone is white');
+      expect(
+        red(module * 7.5, module * 7.5),
+        lessThan(80),
+        reason: 'finder centre is dark',
+      );
+    });
   });
 }

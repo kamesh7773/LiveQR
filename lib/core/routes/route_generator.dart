@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../features/auth/views/auth_gate.dart';
+import '../../features/home/views/home_screen.dart';
 import 'routes.dart';
 
 class RouteGenerator {
@@ -11,7 +11,8 @@ class RouteGenerator {
       case Routes.root:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => const AuthGate(),
+          // Home is open to everyone; signing in is asked for when it's needed (see HomeScreen).
+          builder: (_) => const HomeScreen(),
         );
 
       default:
