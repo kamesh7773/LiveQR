@@ -74,4 +74,24 @@ void main() {
     await tester.pump();
     expect(find.text('A restaurant menu for '), findsOneWidget);
   });
+
+  testWidgets('Link adds a checked web address as a chip', (tester) async {
+    await pumpHome(tester, const []);
+    await tester.tap(find.text('Link'));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.enterText(find.byType(TextField).last, 'not a link');
+    await tester.tap(find.text('Add'));
+    await tester.pump();
+    expect(find.textContaining('Enter a web address'), findsOneWidget);
+
+    await tester.enterText(
+      find.byType(TextField).last,
+      'www.instagram.com/cafe',
+    );
+    await tester.tap(find.text('Add'));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('instagram.com'), findsOneWidget);
+    expect(find.byType(InputChip), findsOneWidget);
+  });
 }

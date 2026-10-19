@@ -187,19 +187,19 @@ class MenuPagePreview extends StatelessWidget {
                       const Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          _Action(
+                          PreviewAction(
                             Icons.call_outlined,
                             'Call',
                             Color(0xFFDBEAFE),
                             Color(0xFF2563EB),
                           ),
-                          _Action(
+                          PreviewAction(
                             Icons.chat_bubble_outline_rounded,
                             'WhatsApp',
                             Color(0xFFDCFCE7),
                             Color(0xFF16A34A),
                           ),
-                          _Action(
+                          PreviewAction(
                             Icons.location_on_outlined,
                             'Map',
                             Color(0xFFFEE2E2),
@@ -277,8 +277,15 @@ class MenuPagePreview extends StatelessWidget {
   }
 }
 
-class _Action extends StatelessWidget {
-  const _Action(this.icon, this.label, this.tint, this.color);
+/// Round-cornered icon button with a label, as on a published page.
+class PreviewAction extends StatelessWidget {
+  const PreviewAction(
+    this.icon,
+    this.label,
+    this.tint,
+    this.color, {
+    super.key,
+  });
 
   final IconData icon;
   final String label;
@@ -301,6 +308,7 @@ class _Action extends StatelessWidget {
         const SizedBox(height: 5),
         Text(
           label,
+          textAlign: TextAlign.center,
           style: const TextStyle(
             fontSize: 9.5,
             fontWeight: FontWeight.w600,

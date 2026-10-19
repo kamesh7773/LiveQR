@@ -1,6 +1,8 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/services/dialog_service.dart';
 import '../../../core/theme/app_colors.dart';
@@ -11,6 +13,9 @@ import '../../../core/widgets/hero_scene.dart';
 import '../../../core/widgets/phone_preview.dart';
 import '../../../core/widgets/live_qr_logo.dart';
 import '../../auth/view_models/auth_view_model.dart';
+import '../../pages/repositories/pages_repository.dart';
+import '../../pages/view_models/page_draft_view_model.dart';
+import '../../pages/views/page_draft_screen.dart';
 import '../models/live_page.dart';
 import '../view_models/home_view_model.dart';
 import 'widgets/pages_shelf.dart';
@@ -23,6 +28,10 @@ const _starters = {
   PageType.card: 'A digital business card for ',
   PageType.event: 'An event page for ',
 };
+
+// Same limits as the backend (src/routes/ai.js).
+const _maxPhotos = 6;
+const _maxLinks = 5;
 
 // ponytail: placeholder address until pages are published by the backend.
 const _sampleQrData = 'https://liveqr.example/p/daily-brew';
@@ -52,12 +61,81 @@ class HomeScreen extends HookConsumerWidget {
       promptFocus.requestFocus();
     }
 
+    final photos = useState<List<ComposerPhoto>>(const []);
+    final links = useState<List<String>>(const []);
+
+    Future<void> addPhotos() async {
+      final room = _maxPhotos - photos.value.length;
+      if (room <= 0) {
+        dialog.showInfo('You can add up to $_maxPhotos photos.');
+        return;
+      }
+      final picked = (await ImagePicker().pickMultiImage(
+        limit: room,
+      )).take(room).toList();
+      if (picked.isEmpty || !context.mounted) return;
+
+      final added = [
+        for (final file in picked) ComposerPhoto(await file.readAsBytes()),
+      ];
+      photos.value = [...photos.value, ...added];
+
+      final repo = ref.read(pagesRepositoryProvider);
+      await Future.wait([
+        for (final (i, photo) in added.indexed)
+          repo
+              .uploadPhoto(picked[i])
+              .then((id) => photo.id = id)
+              .catchError((Object e) {
+                photos.value = [...photos.value]..remove(photo);
+                dialog.showError(
+                  e is DioException
+                      ? (e.message ?? 'Upload failed')
+                      : 'Upload failed',
+                );
+                return '';
+              })
+              // Repaint so the thumbnail drops its spinner.
+              .whenComplete(() => photos.value = [...photos.value]),
+      ]);
+    }
+
+    Future<void> addLink() async {
+      if (links.value.length >= _maxLinks) {
+        dialog.showInfo('You can add up to $_maxLinks links.');
+        return;
+      }
+      final link = await askForLink(context);
+      if (link != null && !links.value.contains(link)) {
+        links.value = [...links.value, link];
+      }
+    }
+
     void create() {
       if (prompt.text.trim().isEmpty) {
         promptFocus.requestFocus();
         return;
       }
-      comingSoon('Page generation');
+      if (prompt.text.trim().length > PromptComposer.maxLength) {
+        dialog.showInfo(
+          'Please shorten your description to ${PromptComposer.maxLength} characters.',
+        );
+        return;
+      }
+      if (photos.value.any((p) => p.id == null)) {
+        dialog.showInfo('Wait a moment, your photos are still uploading.');
+        return;
+      }
+      final request = PageRequest(
+        prompt.text.trim(),
+        photoIds: [for (final p in photos.value) p.id!],
+        links: links.value,
+      );
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => PageDraftScreen(request: request),
+        ),
+      );
     }
 
     void showPages() {
@@ -110,7 +188,13 @@ class HomeScreen extends HookConsumerWidget {
               ? 'e.g. A bakery in Jodhpur with cakes, timings and a call button'
               : 'Describe a business, a menu, an event…',
           onSubmit: create,
-          onAttach: comingSoon,
+          photos: photos.value,
+          links: links.value,
+          onAddPhotos: addPhotos,
+          onAddLink: addLink,
+          onRemovePhoto: (photo) =>
+              photos.value = [...photos.value]..remove(photo),
+          onRemoveLink: (link) => links.value = [...links.value]..remove(link),
         ),
         const SizedBox(height: 26),
         if (firstVisit) const _Steps() else _TypeChips(onPick: start),

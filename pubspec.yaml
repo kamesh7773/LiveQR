@@ -51,6 +51,9 @@ dependencies:
   # QR code generation
   qr: ^4.0.0
 
+  # Photo picking for page images (web file dialog, gallery on mobile)
+  image_picker: ^1.2.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

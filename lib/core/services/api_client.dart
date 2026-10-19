@@ -21,6 +21,10 @@ Dio apiClient(Ref ref) {
     ),
   );
 
+  // Every call sends Authorization, so every call needs a CORS preflight; the backend
+  // answers it (src/cors.js). Silences Dio's per-request reminder about that on web.
+  if (kIsWeb) (dio.httpClientAdapter as dynamic).enableCORSWarning = false;
+
   dio.interceptors.add(
     InterceptorsWrapper(
       onRequest: (options, handler) async {
